@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Монитор</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+</head>
+<body>
+
+<div class="card">
+  <h2 id="username">Alisa</h2>
+  <div class="timer">⏱️ <span id="timer">0 сек</span></div>
+
+  <button class="btn red" onclick="stopStudy()">Завершить</button>
+  <button class="btn yellow" onclick="startStudy()">Перерыв</button>
+</div>
+
+<div class="card">
+  <h3>👥 Онлайн</h3>
+  <div id="users"></div>
+</div>
+
+<div class="card">
+  <h3>💬 Чат</h3>
+  <div id="chat" class="chat-box"></div>
+
+  <div class="chat-input">
+    <input id="msg" placeholder="Сообщение...">
+    <button onclick="sendMessage()">➤</button>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
