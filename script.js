@@ -1,120 +1,59 @@
-const SUPABASE_URL = "https://jjaxitqamrxkktiltgdd.supabase.co";
+import { createClient } from "https://esm.sh/@supabase/supabase-js";
+
+const SUPABASE_URL = "https://jjaxitqamrxkktiltgdd.supabase.coo";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpqYXhpdHFhbXJ4a2t0aWx0Z2RkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzczNTkyNTYsImV4cCI6MjA5MjkzNTI1Nn0.9YorjGmJ7a8m-8JTUyDuTyfZs1GDVE-z483t5iczmfs";
 
-const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
 
-const userId = crypto.randomUUID();
-const userName = "Alisa";
+// ====== ПОЛЬЗОВАТЕЛЬ ======
+async function loadUser() {
+  const { data: { user } } = await supabase.auth.getUser();
 
-let startTime = null;
-
-// 🔹 при заходе
-async function init() {
-  await supabase.from("users").insert({
-    id: userId,
-    name: userName,
-    status: "online",
-    last_seen: new Date()
-  });
-}
-
-init();
-
-// 🔹 онлайн пинг
-setInterval(async () => {
-  await supabase.from("users")
-    .update({
-      status: "online",
-      last_seen: new Date()
-    })
-    .eq("id", userId);
-}, 10000);
-
-// 🔹 выход
-window.addEventListener("beforeunload", async () => {
-  await supabase.from("users")
-    .update({ status: "offline" })
-    .eq("id", userId);
-});
-
-// 🔹 загрузка пользователей
-async function loadUsers() {
-  const { data } = await supabase.from("users").select("*");
-
-  const el = document.getElementById("users");
-  el.innerHTML = "";
-
-  data.forEach(user => {
-    const isOnline =
-      new Date() - new Date(user.last_seen) < 15000;
-
-    el.innerHTML += `
-      <div>
-        <span class="${isOnline ? 'online' : 'offline'}">●</span>
-        ${user.name}
-      </div>
-    `;
-  });
-}
-
-setInterval(loadUsers, 3000);
-
-// 🔹 старт учебы
-function startStudy() {
-  startTime = new Date();
-}
-
-// 🔹 стоп учебы
-async function stopStudy() {
-  if (!startTime) return;
-
-  const sec = Math.floor((new Date() - startTime) / 1000);
-
-  await supabase.from("users")
-    .update({ study_time: sec })
-    .eq("id", userId);
-
-  startTime = null;
-}
-
-// 🔹 таймер
-setInterval(() => {
-  if (startTime) {
-    const sec = Math.floor((new Date() - startTime) / 1000);
-    document.getElementById("timer").innerText = sec + " сек";
+  if (!user) {
+    document.getElementById("user-name").textContent = "Не авторизован";
+    return;
   }
-}, 1000);
 
-// 🔹 отправка сообщения
-async function sendMessage() {
-  const input = document.getElementById("msg");
+  // Имя можно хранить в user_metadata
+  const name = user.user_metadata?.name || user.email;
 
-  if (!input.value) return;
-
-  await supabase.from("messages").insert({
-    user_name: userName,
-    text: input.value,
-    created_at: new Date()
-  });
-
-  input.value = "";
+  document.getElementById("user-name").textContent = name;
 }
 
-// 🔹 загрузка сообщений
-async function loadMessages() {
-  const { data } = await supabase
-    .from("messages")
-    .select("*")
-    .order("created_at", { ascending: true });
+// ====== ТАЙМЕР ======
+let seconds = 0;
+let interval = null;
 
-  const chat = document.getElementById("chat");
-  chat.innerHTML = "";
-
-  data.forEach(msg => {
-    chat.innerHTML += `
-      <div><b>${msg.user_name}:</b> ${msg.text}</div>
-    `;
-  });
+function updateTimer() {
+  document.getElementById("timer").textContent = seconds + " сек";
 }
 
-setInterval(loadMessages, 2000);
+function startTimer() {
+  if (interval) return;
+
+  interval = setInterval(() => {
+    seconds++;
+    updateTimer();
+  }, 1000);
+}
+
+function pauseTimer() {
+  clearInterval(interval);
+  interval = null;
+}
+
+function stopTimer() {
+  clearInterval(interval);
+  interval = null;
+  seconds = 0;
+  updateTimer();
+}
+
+// ====== КНОПКИ ======
+document.getElementById("start-btn").addEventListener("click", startTimer);
+document.getElementById("pause-btn").addEventListener("click", pauseTimer);
+document.getElementById("stop-btn").addEventListener("click", stopTimer);
+
+// ====== ИНИЦИАЛИЗАЦИЯ ======
+loadUser();
+updateTimer();
